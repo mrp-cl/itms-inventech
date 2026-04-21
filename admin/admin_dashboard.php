@@ -14,7 +14,7 @@ $division = $_SESSION['user']['division'];
 /* =========================
    PAGINATION LOGIC
 ========================= */
-$limit = 10;
+$limit = 3;
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 if ($page < 1)
     $page = 1;
@@ -62,52 +62,50 @@ $result = $conn->query($sql);
 
     <?php include("./modals/add_user_modal.php"); ?>
 
-    <div class="main-container">
+    <!-- HEADER -->
+    <header class="header">
+        <div class="navbar">
+            <div class="nav-left">
+                <img src="../assets/img/ITMSLOGO.jpg" class="logo">
+                <span class="title">ITMS INVENTECH</span>
+            </div>
 
-        <!-- HEADER -->
-        <header class="header">
-            <div class="navbar">
-                <div class="nav-left">
-                    <img src="../assets/img/ITMSLOGO.jpg" class="logo">
-                    <span class="title">ITMS INVENTECH</span>
-                </div>
+            <div class="admin-profile" id="adminProfile">
+                <span>Admin</span>
+                <div class="profile-avatar">A</div>
 
-                <div class="admin-profile" id="adminProfile">
-                    <span>Admin</span>
-                    <div class="profile-avatar">A</div>
-
-                    <div class="dropdown-menu" id="dropdownMenu">
-                        <a href="../auth/logout.php">Logout</a>
-                    </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="../auth/logout.php">Logout</a>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
+    <div class="main-container">
 
         <!-- CONTENT -->
         <div class="content">
-
-            <div class="content-header">
-                <h2><?= htmlspecialchars($division) ?></h2>
-
-                <!-- SEARCH -->
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search users...">
-                </div>
-
-                <!-- ACTION BUTTONS -->
-                <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="openModal('addUserModal')">
-                        Add User
-                    </button>
-
-                    <button type="button" class="btn btn-danger" onclick="submitDeactivate()">
-                        Deactivate Selected
-                    </button>
-                </div>
-            </div>
-
             <form method="POST" action="../admin/deactivate_user.php" id="bulkForm">
+                <div class="content-header">
+                    <h2>
+                        <?= htmlspecialchars($division) ?>
+                    </h2>
 
+                    <!-- SEARCH -->
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search users...">
+                    </div>
+
+                    <!-- ACTION BUTTONS -->
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="openModal('addUserModal')">
+                            Add User
+                        </button>
+
+                        <button type="button" class="btn btn-danger" onclick="submitDeactivate()">
+                            Deactivate Selected
+                        </button>
+                    </div>
+                </div>
                 <div class="table-section">
                     <div class="table-header">
                         <input type="checkbox" id="selectAll">
