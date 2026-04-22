@@ -7,27 +7,38 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-
-// BULK DEACTIVATE
+/* =========================
+   BULK DELETE USERS
+========================= */
 if (!empty($_POST['user_ids'])) {
 
     $ids = array_map('intval', $_POST['user_ids']);
     $idList = implode(',', $ids);
 
-    $conn->query("UPDATE users SET status='inactive' WHERE id IN ($idList)");
+    // OPTIONAL SAFETY: delete related devices first (avoid foreign key error)
+    $conn->query("DELETE FROM devices WHERE user_id IN ($idList)");
 
-    header("Location: ../admin/admin_dashboard.php?deactivated=1");
+    // delete users
+    $conn->query("DELETE FROM users WHERE id IN ($idList)");
+
+    header("Location: ../admin/admin_dashboard.php?deleted=1");
     exit();
 }
 
-//single deactivate
+/* =========================
+   SINGLE DELETE USER
+========================= */
 if (isset($_GET['id'])) {
 
     $id = intval($_GET['id']);
 
-    $conn->query("UPDATE users SET status='inactive' WHERE id = $id");
+    // OPTIONAL SAFETY: delete devices first
+    $conn->query("DELETE FROM devices WHERE user_id = $id");
 
-    header("Location: ../admin/admin_dashboard.php?deactivated=1");
+    // delete user
+    $conn->query("DELETE FROM users WHERE id = $id");
+
+    header("Location: ../admin/admin_dashboard.php?deleted=1");
     exit();
 }
 

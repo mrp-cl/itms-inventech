@@ -21,12 +21,18 @@ if ($page < 1)
 
 $offset = ($page - 1) * $limit;
 
-// Count total users
-$count_sql = "SELECT COUNT(*) as total FROM users 
-              WHERE division='$division' 
-              AND role='user' 
-              AND status='active'";
-$count_result = $conn->query($count_sql);
+/* =========================
+   COUNT TOTAL USERS (SAFE)
+========================= */
+$count_stmt = $conn->prepare("
+    SELECT COUNT(*) as total 
+    FROM users 
+    WHERE division = ?
+    AND role = 'user'
+");
+$count_stmt->bind_param("s", $division);
+$count_stmt->execute();
+$count_result = $count_stmt->get_result();
 $total_rows = $count_result->fetch_assoc()['total'];
 
 $total_pages = ceil($total_rows / $limit);
@@ -34,14 +40,20 @@ if ($page > $total_pages && $total_pages > 0) {
     $page = $total_pages;
 }
 
-// Fetch users
-$sql = "SELECT * FROM users 
-        WHERE division='$division' 
-        AND role='user' 
-        AND status='active'
-        LIMIT $limit OFFSET $offset";
+/* =========================
+   FETCH USERS (SAFE)
+========================= */
+$data_stmt = $conn->prepare("
+    SELECT * 
+    FROM users 
+    WHERE division = ?
+    AND role = 'user'
+    LIMIT ? OFFSET ?
+");
 
-$result = $conn->query($sql);
+$data_stmt->bind_param("sii", $division, $limit, $offset);
+$data_stmt->execute();
+$result = $data_stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -97,8 +109,8 @@ $result = $conn->query($sql);
 
                     <!-- ACTION BUTTONS -->
                     <div class="action-buttons">
-                        <button class="btn btn-primary" onclick="openModal('addUserModal')">
-                            Add User
+                        <button type="button" class="btn btn-primary" onclick="openModal('addUserModal')">
+                            + Add User
                         </button>
 
                         <button type="button" class="btn btn-danger" onclick="submitDeactivate()">
@@ -203,6 +215,7 @@ $result = $conn->query($sql);
     </div>
 
     <script>
+
         // SEARCH
         document.getElementById('searchInput')?.addEventListener('keyup', function (e) {
             const term = e.target.value.toLowerCase();
@@ -234,11 +247,23 @@ $result = $conn->query($sql);
         // MODAL
         function openModal(id) {
             document.getElementById(id).classList.add('active');
+
         }
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
+
+            if (id === 'addUserModal') {
+                resetAddUserForm();
+            }
         }
+        function resetAddUserForm() {
+            const form = document.querySelector('#addUserModal form');
+            if (form) {
+                form.reset();
+            }
+        }
+
 
         // BULK DEACTIVATE
         function submitDeactivate() {

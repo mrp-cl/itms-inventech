@@ -2,42 +2,48 @@
 session_start();
 include("../config/db.php");
 
-$email = $_POST['email'];
-$password = $_POST['password'];
+$email = $_POST['email'] ?? '';
+$password = $_POST['password'] ?? '';
 
-$sql = "SELECT * FROM users WHERE email='$email' AND status='active'";
-$result = $conn->query($sql);
+$stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
 if ($user && password_verify($password, $user['password'])) {
 
-    //USER LOGIN BUTTON
+    // USER LOGIN
     if (isset($_POST['user_login'])) {
+
         if ($user['role'] == 'user') {
             $_SESSION['user'] = $user;
             header("Location: ../pages/user_dashboard.php");
+            exit();
         } else {
-            echo "Only users can login here!";
+            header("Location: ../index.php?error=not_user");
+            exit();
         }
     }
 
-    //ADMIN LOGIN BUTTON
+    // ADMIN LOGIN
     if (isset($_POST['admin_login'])) {
+
         if ($user['role'] == 'admin') {
             $_SESSION['user'] = $user;
             header("Location: ../admin/admin_dashboard.php");
-            echo "admin";
+            exit();
         } elseif ($user['role'] == 'superadmin') {
             $_SESSION['user'] = $user;
             header("Location: ../superadmin/superadmin_dashboard.php");
-            echo "user";
-
+            exit();
         } else {
-            echo "Access denied! Not an admin.";
+            header("Location: ../index.php?error=not_admin");
+            exit();
         }
     }
 
 } else {
-    echo "Invalid login credentials!";
+    header("Location: ../index.php?error=invalid");
+    exit();
 }
-?>

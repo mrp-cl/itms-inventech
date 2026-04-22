@@ -1,46 +1,197 @@
+<?php
+include("../config/db.php");
+
+/* DEFINE DIVISIONS */
+$divisions = [
+    ["name" => "ARMD"],
+    ["name" => "SMD"],
+    ["name" => "ITSD"],
+    ["name" => "ITPMD"],
+    ["name" => "DMD"],
+    ["name" => "PTD"],
+    ["name" => "PTMD"],
+    ["name" => "ISSD"],
+];
+
+/* COUNT USERS PER DIVISION */
+foreach ($divisions as &$div) {
+    $name = $div['name'];
+
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) as total
+        FROM users
+        WHERE division = ?
+    ");
+
+    $stmt->bind_param("s", $name);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+
+    $div['count'] = $row['total'] ?? 0;
+}
+$conn->close();
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="super_admin.css">
+    <link rel="stylesheet" href="./css/super_admin.css">
     <title>Super Admin Dashboard</title>
 </head>
 
 <body>
 
-    <div class="sidebar">
-        <img src="logo.png" alt="Logo">
-        <h2>ITMS InvenTech</h2>
-        <a href="super_admin.php" class="active">Dashboard</a>
-        <a href="modify_admin.php">Modify Admin</a>
-        <a href="analytics.php">Analytics</a>
-        <a href="add_reports.php">Add Reports</a>
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <img src="../assets/img/ITMSLOGO.jpg" class="logo">
+
+        <h2 class="sidebar-title">ITMS InvenTech</h2>
+
+        <a class="active">
+            <span class="icon">🏠</span>
+            <span class="text">Dashboard</span>
+        </a>
+
+        <a href="modify_admin.php">
+            <span class="icon">👤</span>
+            <span class="text">Modify Admin</span>
+        </a>
+
+        <a href="analytics.php">
+            <span class="icon">📊</span>
+            <span class="text">Analytics</span>
+        </a>
+
+        <a href="add_report.php">
+            <span class="icon">📝</span>
+            <span class="text">Add Reports</span>
+        </a>
     </div>
 
-    <div class="main">
-        <div class="topnav">
-            <div></div> <!-- for spacing if needed -->
-            <div class="profile">
-                <img src="avatar.png" alt="avatar">
-                <!-- <div> NAME
-                    <?php echo htmlspecialchars($admin['fullname']); ?>
-                </div> -->
-            </div>
+    <!-- TOP NAVBAR -->
+    <div class="topbar">
+        <div class="left">
+            <button class="hamburger">&#9776;</button>
         </div>
+        <div class="right">
+            <span class="username">Super Admin</span>
+            <img src="avatar.png" class="profile-pic">
+        </div>
+    </div>
 
+
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
         <div class="content">
-            <h1>ITMS Division / Office's</h1>
+            <h1 class="page-title">ITMS Division / Office’s</h1>
+
             <div class="grid">
+
                 <?php foreach ($divisions as $div): ?>
-                    <div class="card" onclick="location.href='<?php echo $div['link']; ?>'">
-                        <?php echo htmlspecialchars($div['name']); ?>
+                    <div class="card" onclick="openModal('<?php echo $div['name']; ?>')">
+
+                        <div class="card-title">
+                            <?php echo $div['name']; ?>
+                        </div>
+
+                        <div class="card-line">____________</div>
+
+                        <div class="card-count">
+                            <?php echo $div['count']; ?>
+                        </div>
+                        <div>Personnels</div>
+
                     </div>
                 <?php endforeach; ?>
+
             </div>
         </div>
     </div>
+
+    <!-- MODAL -->
+    <div id="divisionModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <div id="modalData">Loading...</div>
+        </div>
+    </div>
+    <script>
+        // SEARCH
+        function searchTable() {
+            let input = document.getElementById("searchInput").value.toLowerCase();
+            let rows = document.querySelectorAll("#deviceTable tbody tr");
+
+            rows.forEach(row => {
+                let text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+
+        // PAGINATION
+        function paginateTable(rowsPerPage = 5) {
+            const table = document.getElementById("deviceTable");
+            const rows = table.querySelectorAll("tbody tr");
+            const pagination = document.getElementById("pagination");
+
+            let currentPage = 1;
+
+            function showPage(page) {
+                currentPage = page;
+                rows.forEach((row, index) => {
+                    row.style.display =
+                        index >= (page - 1) * rowsPerPage &&
+                            index < page * rowsPerPage
+                            ? ""
+                            : "none";
+                });
+            }
+
+            let totalPages = Math.ceil(rows.length / rowsPerPage);
+            pagination.innerHTML = "";
+
+            for (let i = 1; i <= totalPages; i++) {
+                let btn = document.createElement("button");
+                btn.innerText = i;
+                btn.onclick = () => showPage(i);
+                pagination.appendChild(btn);
+            }
+
+            showPage(1);
+        }
+
+        // RUN AFTER MODAL LOAD
+        function loadPagination() {
+            setTimeout(() => paginateTable(), 300);
+        }
+    </script>
+
+    <script>
+        const sidebar = document.getElementById("sidebar");
+        const hamburger = document.querySelector(".hamburger");
+
+        // LOAD STATE ON PAGE LOAD
+        if (localStorage.getItem("sidebar") === "collapsed") {
+            sidebar.classList.add("collapsed");
+        }
+
+        // TOGGLE + SAVE STATE
+        hamburger.addEventListener("click", () => {
+            sidebar.classList.toggle("collapsed");
+
+            if (sidebar.classList.contains("collapsed")) {
+                localStorage.setItem("sidebar", "collapsed");
+            } else {
+                localStorage.setItem("sidebar", "expanded");
+            }
+        });
+    </script>
+
 
 </body>
 
